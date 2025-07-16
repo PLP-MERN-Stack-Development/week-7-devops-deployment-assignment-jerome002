@@ -1,27 +1,30 @@
+// backend/server.js
 const express = require('express');
 const mongoose = require('mongoose');
+const dotenv = require('dotenv');
 const helmet = require('helmet');
 const morgan = require('morgan');
-require('dotenv').config();
+const cors = require('cors');
 
+const menuRoutes = require('./routes/menuRoutes');
+
+dotenv.config();
 const app = express();
 
+// Middleware
 app.use(helmet());
-app.use(morgan('combined'));
+app.use(cors());
 app.use(express.json());
+app.use(morgan('dev'));
 
-// Health check route
-app.get('/health', (req, res) => res.status(200).send('OK'));
+// Routes
+app.use('/api/menu', menuRoutes);
+app.get('/health', (req, res) => res.send('OK'));
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  poolSize: 10,
-}).then(() => console.log('MongoDB connected'))
-  .catch(err => console.error(err));
-
-// Start server
+// Connect DB and start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => {
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  })
+  .catch(err => console.error(err));
